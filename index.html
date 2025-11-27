@@ -6,9 +6,9 @@
 <title>Marko Köp&Sälj</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:0; }
-  header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+  header { background: #4CAF50; color: white; padding: 20px; text-align: center; position: relative; }
   main { padding: 20px; max-width: 900px; margin: auto; }
-  form { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; }
+  form { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; display: none; }
   input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
   button { background: #4CAF50; color: white; border: none; cursor: pointer; }
   button:hover { background: #45a049; }
@@ -30,6 +30,21 @@
     box-shadow: 0 2px 6px rgba(0,0,0,0.2);
     z-index: 1000;
   }
+  #toggleFormBtn {
+    position: absolute;
+    top: 20px;
+    right: 20px;
+    background: #ffffff;
+    color: #4CAF50;
+    border: none;
+    padding: 10px 15px;
+    border-radius: 5px;
+    cursor: pointer;
+    font-weight: bold;
+  }
+  #toggleFormBtn:hover {
+    background: #e8e8e8;
+  }
 </style>
 </head>
 <body>
@@ -39,6 +54,7 @@
 <header>
   <h1>Marko Köp&Sälj</h1>
   <p>Lägg upp dina annonser själv, köp och sälj enkelt!</p>
+  <button id="toggleFormBtn">Lägg in ny annons</button>
 </header>
 
 <main>
@@ -62,16 +78,20 @@
 const form = document.getElementById('productForm');
 const productsList = document.getElementById('productsList');
 const notification = document.getElementById('notification');
+const toggleFormBtn = document.getElementById('toggleFormBtn');
 const API_URL = "https://script.google.com/macros/s/AKfycbzcdaiS5I3tDa3qPN8AiqXexyP-WaWcwQ-5MXPcGU9vTr9ak4vnQPvKFdea4mTTh1s5/exec";
 
 let productsCache = [];
+
+toggleFormBtn.addEventListener('click', () => {
+  form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
+});
 
 async function fetchProducts() {
   try {
     const res = await fetch(API_URL);
     const products = await res.json();
 
-    // Visa notifikation om nya produkter har lagts till
     if (products.length > productsCache.length) {
       showNotification();
     }
@@ -138,16 +158,15 @@ form.addEventListener('submit', async function(e) {
     });
     fetchProducts();
     form.reset();
+    form.style.display = "none";
   } catch (err) {
     console.error("Kunde inte lägga till produkt:", err);
   }
 });
 
-// Hämta produkter direkt och uppdatera var 10:e sekund
 fetchProducts();
 setInterval(fetchProducts, 10000);
 </script>
 
 </body>
 </html>
-
