@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Min Hobby Marknadsplats</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:0; }
+  header { background: #4CAF50; color: white; padding: 20px; text-align: center; }
+  main { padding: 20px; max-width: 900px; margin: auto; }
+  form { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; }
+  input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
+  button { background: #4CAF50; color: white; border: none; cursor: pointer; }
+  button:hover { background: #45a049; }
+  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+  .product img { max-width: 150px; display:block; margin-bottom:10px; }
+  .products-list { margin-top: 20px; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>Min Hobby Marknadsplats</h1>
+  <p>Lägg upp dina annonser själv, köp och sälj enkelt!</p>
+</header>
+
+<main>
+  <h2>Lägg upp en produkt</h2>
+  <form id="productForm">
+    <input type="text" id="title" placeholder="Produktnamn" required>
+    <textarea id="description" placeholder="Beskrivning" required></textarea>
+    <input type="url" id="image" placeholder="Bild-URL" required>
+    <input type="number" id="price" placeholder="Pris (SEK)" required>
+    <input type="text" id="paypal" placeholder="PayPal-mejl för betalning" required>
+    <button type="submit">Lägg upp produkt</button>
+  </form>
+
+  <h2>Produkter</h2>
+  <div class="products-list" id="productsList">
+    <p>Inga produkter upplagda än.</p>
+  </div>
+</main>
+
+<script>
+const form = document.getElementById('productForm');
+const productsList = document.getElementById('productsList');
+const API_URL = "DIN_WEBAPP_URL_HÄR"; // Ersätt med din Google Sheets Web App URL
+
+async function fetchProducts() {
+  const res = await fetch(API_URL);
+  const products = await res.json();
+  renderProducts(products);
+}
+
+function renderProducts(products) {
+  if(products.length === 0) {
+    productsList.innerHTML = '<p>Inga produkter upplagda än.</p>';
+    return;
+  }
+  productsList.innerHTML = '';
+  products.forEach(p => {
+    const productHTML = `
+      <div class="product">
+        <h3>${p.title} - ${p.price} SEK</h3>
+        <img src="${p.image}" alt="${p.title}">
+        <p>${p.description}</p>
+        <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">
+          Köp via PayPal
+        </a>
+      </div>
+    `;
+    productsList.insertAdjacentHTML('beforeend', productHTML);
+  });
+}
+
+form.addEventListener('submit', async function(e) {
+  e.preventDefault();
+  const newProduct = {
+    title: document.getElementById('title').value,
+    description: document.getElementById('description').value,
+    image: document.getElementById('image').value,
+    price: document.getElementById('price').value,
+    paypal: document.getElementById('paypal').value
+  };
+
+  await fetch(API_URL, {
+    method: "POST",
+    body: JSON.stringify(newProduct)
+  });
+
+  form.reset();
+  fetchProducts();
+});
+
+fetchProducts();
+</script>
+
+</body>
+</html>
