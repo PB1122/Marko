@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marko Köp & Sälj</title>
+<title>Marko Köp&Sälj</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:0; }
   header { background: #4CAF50; color: white; padding: 20px; text-align: center; position: relative; }
@@ -37,15 +37,13 @@
     background: #ffffff;
     color: #4CAF50;
     border: none;
-    padding: 6px 12px;   /* smalare knapp */
+    padding: 6px 12px;
     border-radius: 5px;
     cursor: pointer;
     font-weight: bold;
     width: auto;
   }
-  #toggleFormBtn:hover {
-    background: #e8e8e8;
-  }
+  #toggleFormBtn:hover { background: #e8e8e8; }
 </style>
 </head>
 <body>
@@ -53,7 +51,7 @@
 <div id="notification">Nya produkter har lagts till!</div>
 
 <header>
-  <h1>Marko Köp & Sälj</h1>
+  <h1>Marko Köp&Sälj</h1>
   <p>Lägg upp dina annonser själv, köp och sälj enkelt!</p>
   <button id="toggleFormBtn">Lägg in ny annons</button>
 </header>
@@ -80,7 +78,9 @@ const form = document.getElementById('productForm');
 const productsList = document.getElementById('productsList');
 const notification = document.getElementById('notification');
 const toggleFormBtn = document.getElementById('toggleFormBtn');
-const API_URL = "https://script.google.com/macros/s/AKfycbzcdaiS5I3tDa3qPN8AiqXexyP-WaWcwQ-5MXPcGU9vTr9ak4vnQPvKFdea4mTTh1s5/exec";
+
+// Byt ut mot din riktiga Apps Script URL
+const API_URL = "DIN_WEB_APP_URL_HÄR";
 
 let productsCache = [];
 
@@ -92,16 +92,11 @@ async function fetchProducts() {
   try {
     const res = await fetch(API_URL);
     const products = await res.json();
-
-    if (products.length > productsCache.length) {
-      showNotification();
-    }
-
+    if (products.length > productsCache.length) showNotification();
     productsCache = products;
     renderProducts();
   } catch (err) {
     alert("Fel vid hämtning: " + err.message);
-    console.error("Kunde inte hämta produkter:", err);
   }
 }
 
@@ -141,7 +136,6 @@ async function deleteProduct(index) {
     fetchProducts();
   } catch (err) {
     alert("Fel vid borttagning: " + err.message);
-    console.error("Kunde inte ta bort produkt:", err);
   }
 }
 
@@ -161,14 +155,12 @@ form.addEventListener('submit', async function(e) {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newProduct)
     });
-    // Lägg till direkt i listan
     productsCache.push(newProduct);
     renderProducts();
     form.reset();
     form.style.display = "none";
   } catch (err) {
     alert("Fel vid uppläggning: " + err.message);
-    console.error("Kunde inte lägga till produkt:", err);
   }
 });
 
