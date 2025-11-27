@@ -17,19 +17,6 @@
   .products-list { margin-top: 20px; }
   .delete-btn { background: #f44336; margin-top: 5px; }
   .delete-btn:hover { background: #d32f2f; }
-  #notification {
-    position: fixed;
-    top: 10px;
-    left: 50%;
-    transform: translateX(-50%);
-    background: #4CAF50;
-    color: white;
-    padding: 10px 20px;
-    border-radius: 5px;
-    display: none;
-    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
-    z-index: 1000;
-  }
   #toggleFormBtn {
     position: absolute;
     top: 20px;
@@ -47,8 +34,6 @@
 </style>
 </head>
 <body>
-
-<div id="notification">Nya produkter har lagts till!</div>
 
 <header>
   <h1>Marko Köp&Sälj</h1>
@@ -76,11 +61,8 @@
 <script>
 const form = document.getElementById('productForm');
 const productsList = document.getElementById('productsList');
-const notification = document.getElementById('notification');
 const toggleFormBtn = document.getElementById('toggleFormBtn');
-
-// Byt ut mot din riktiga Apps Script URL
-const API_URL = "DIN_WEB_APP_URL_HÄR";
+const API_URL = "https://script.google.com/macros/s/AKfycbzcdaiS5I3tDa3qPN8AiqXexyP-WaWcwQ-5MXPcGU9vTr9ak4vnQPvKFdea4mTTh1s5/exec";
 
 let productsCache = [];
 
@@ -92,11 +74,10 @@ async function fetchProducts() {
   try {
     const res = await fetch(API_URL);
     const products = await res.json();
-    if (products.length > productsCache.length) showNotification();
     productsCache = products;
     renderProducts();
   } catch (err) {
-    alert("Fel vid hämtning: " + err.message);
+    console.error("Kunde inte hämta produkter:", err);
   }
 }
 
@@ -120,11 +101,6 @@ function renderProducts() {
   });
 }
 
-function showNotification() {
-  notification.style.display = "block";
-  setTimeout(() => { notification.style.display = "none"; }, 3000);
-}
-
 async function deleteProduct(index) {
   if(!confirm("Vill du verkligen ta bort produkten?")) return;
   try {
@@ -135,7 +111,7 @@ async function deleteProduct(index) {
     });
     fetchProducts();
   } catch (err) {
-    alert("Fel vid borttagning: " + err.message);
+    console.error("Kunde inte ta bort produkt:", err);
   }
 }
 
@@ -160,12 +136,12 @@ form.addEventListener('submit', async function(e) {
     form.reset();
     form.style.display = "none";
   } catch (err) {
-    alert("Fel vid uppläggning: " + err.message);
+    console.error("Kunde inte lägga till produkt:", err);
   }
 });
 
+// Hämta produkter en gång vid start
 fetchProducts();
-setInterval(fetchProducts, 10000);
 </script>
 
 </body>
