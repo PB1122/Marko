@@ -12,15 +12,32 @@
   input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
   button { background: #4CAF50; color: white; border: none; cursor: pointer; }
   button:hover { background: #45a049; }
-  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative; }
   .product img { max-width: 150px; display:block; margin-bottom:10px; }
   .products-list { margin-top: 20px; }
+  .delete-btn { background: #f44336; margin-top: 5px; }
+  .delete-btn:hover { background: #d32f2f; }
+  #notification {
+    position: fixed;
+    top: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #4CAF50;
+    color: white;
+    padding: 10px 20px;
+    border-radius: 5px;
+    display: none;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.2);
+    z-index: 1000;
+  }
 </style>
 </head>
 <body>
 
+<div id="notification">Nya produkter har lagts till!</div>
+
 <header>
-  <h1>Min Hobby Marknadsplats</h1>
+  <h1>Marko Köp&Sälj</h1>
   <p>Lägg upp dina annonser själv, köp och sälj enkelt!</p>
 </header>
 
@@ -44,34 +61,63 @@
 <script>
 const form = document.getElementById('productForm');
 const productsList = document.getElementById('productsList');
-const API_URL = "https://script.google.com/macros/s/AKfycbz7hPKYdUW4KTPe9Bwhg-cyGrseSOq9MZ4oAwjFdzuDEKoXaIfWo6nNbYanAgxUPclk/exec
-"; // Ersätt med din Google Sheets Web App URL
+const notification = document.getElementById('notification');
+const API_URL = "https://script.google.com/macros/s/AKfycbzcdaiS5I3tDa3qPN8AiqXexyP-WaWcwQ-5MXPcGU9vTr9ak4vnQPvKFdea4mTTh1s5/exec";
+
+let productsCache = [];
 
 async function fetchProducts() {
-  const res = await fetch(API_URL);
-  const products = await res.json();
-  renderProducts(products);
+  try {
+    const res = await fetch(API_URL);
+    const products = await res.json();
+
+    if (products.length > productsCache.length) {
+      showNotification();
+    }
+
+    productsCache = products;
+    renderProducts();
+  } catch (err) {
+    console.error("Kunde inte hämta produkter:", err);
+  }
 }
 
-function renderProducts(products) {
-  if(products.length === 0) {
+function renderProducts() {
+  if(productsCache.length === 0) {
     productsList.innerHTML = '<p>Inga produkter upplagda än.</p>';
     return;
   }
   productsList.innerHTML = '';
-  products.forEach(p => {
+  productsCache.forEach((p, index) => {
     const productHTML = `
       <div class="product">
         <h3>${p.title} - ${p.price} SEK</h3>
         <img src="${p.image}" alt="${p.title}">
         <p>${p.description}</p>
-        <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">
-          Köp via PayPal
-        </a>
+        <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">Köp via PayPal</a>
+        <button class="delete-btn" onclick="deleteProduct(${index})">Ta bort produkt</button>
       </div>
     `;
     productsList.insertAdjacentHTML('beforeend', productHTML);
   });
+}
+
+function showNotification() {
+  notification.style.display = "block";
+  setTimeout(() => { notification.style.display = "none"; }, 3000);
+}
+
+async function deleteProduct(index) {
+  if(!confirm("Vill du verkligen ta bort produkten?")) return;
+  try {
+    await fetch(API_URL, {
+      method: "DELETE",
+      body: JSON.stringify({ index })
+    });
+    fetchProducts();
+  } catch (err) {
+    console.error("Kunde inte ta bort produkt:", err);
+  }
 }
 
 form.addEventListener('submit', async function(e) {
@@ -84,17 +130,22 @@ form.addEventListener('submit', async function(e) {
     paypal: document.getElementById('paypal').value
   };
 
-  await fetch(API_URL, {
-    method: "POST",
-    body: JSON.stringify(newProduct)
-  });
-
-  form.reset();
-  fetchProducts();
+  try {
+    await fetch(API_URL, {
+      method: "POST",
+      body: JSON.stringify(newProduct)
+    });
+    fetchProducts();
+    form.reset();
+  } catch (err) {
+    console.error("Kunde inte lägga till produkt:", err);
+  }
 });
 
 fetchProducts();
+setInterval(fetchProducts, 10000);
 </script>
 
 </body>
 </html>
+
