@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -16,6 +17,8 @@
   .products-list { margin-top: 20px; }
   #toggleFormBtn { position: absolute; top: 20px; right: 20px; background: #ffffff; color: #4CAF50; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: auto; }
   #toggleFormBtn:hover { background: #e8e8e8; }
+  .deleteBtn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+  .deleteBtn:hover { background: #c0392b; }
 </style>
 </head>
 <body>
@@ -77,14 +80,27 @@ function renderProducts() {
   }
   productsList.innerHTML = '';
   productsCache.forEach((p, index) => {
-    const productHTML = `
-      <div class="product">
-        <h3>${p.title} - ${p.price} SEK</h3>
-        <p>${p.description}</p>
-        <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">Köp via PayPal</a>
-      </div>
-    `;
-    productsList.insertAdjacentHTML('beforeend', productHTML);
+    const productDiv = document.createElement("div");
+    productDiv.className = "product";
+
+    const title = document.createElement("h3");
+    title.textContent = `${p.title} - ${p.price} SEK`;
+
+    const desc = document.createElement("p");
+    desc.textContent = p.description;
+
+    const link = document.createElement("a");
+    link.href = `https://www.paypal.me/${p.paypal}/${p.price}`;
+    link.textContent = "Köp via PayPal";
+    link.target = "_blank";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.className = "deleteBtn";
+    deleteBtn.textContent = "Ta bort annons";
+    deleteBtn.addEventListener("click", () => deleteProduct(index));
+
+    productDiv.append(title, desc, link, deleteBtn);
+    productsList.appendChild(productDiv);
   });
 }
 
@@ -99,19 +115,43 @@ form.addEventListener('submit', async function(e) {
   };
 
   try {
-    await fetch(API_URL, {
+    const response = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newProduct)
     });
-    productsCache.push(newProduct);
-    renderProducts();
-    form.reset();
-    form.style.display = "none";
+
+    if (response.ok) {
+      await fetchProducts(); // hämta uppdaterad lista
+      form.reset();
+      form.style.display = "none";
+    } else {
+      alert("Kunde inte lägga till produkt. Försök igen.");
+    }
   } catch (err) {
     console.error("Kunde inte lägga till produkt:", err);
   }
 });
+
+// Ta bort produkt
+async function deleteProduct(index) {
+  const product = productsCache[index];
+  try {
+    const response = await fetch(API_URL, {
+      method: "DELETE",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ title: product.title })
+    });
+
+    if (response.ok) {
+      await fetchProducts(); // hämta uppdaterad lista
+    } else {
+      alert("Kunde inte ta bort produkt.");
+    }
+  } catch (err) {
+    console.error("Fel vid borttagning:", err);
+  }
+}
 
 // Hämta produkter vid start
 fetchProducts();
@@ -119,4 +159,3 @@ fetchProducts();
 
 </body>
 </html>
-
