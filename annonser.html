@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="sv">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Annonser</title>
+<style>
+  body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:0; }
+  main { padding: 20px; max-width: 900px; margin: auto; }
+  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+  .deleteBtn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
+  .deleteBtn:hover { background: #c0392b; }
+</style>
+</head>
+<body>
+
+<main>
+  <h1>Alla annonser</h1>
+  <div id="productsList"><p>Laddar annonser...</p></div>
+  <p><a href="index.html">Lägg upp ny annons</a></p>
+</main>
+
+<script>
+const API_URL = "DIN_GOOGLE_APPS_SCRIPT_URL";
+const productsList = document.getElementById('productsList');
+let productsCache = [];
+
+async function fetchProducts() {
+  try {
+    const res = await fetch(`${API_URL}?t=${Date.now()}`, { cache: "no-store" });
+    const products = await res.json();
+    productsCache = products;
+    renderProducts();
+  } catch (err) {
+    console.error("Kunde inte hämta produkter:", err);
+    productsList.innerHTML = '<p>Kunde inte hämta annonser.</p>';
+  }
+}
+
+function renderProducts() {
+  if(productsCache.length === 0) {
+    productsList.innerHTML = '<p>Inga annonser upplagda än.</p>';
+    return;
+  }
+  productsList.innerHTML = '';
+  productsCache.forEach((p) => {
+    const div = document.createElement("div");
+    div.className = "product";
+    div.innerHTML = `
+      <h3>${p.title} - ${p.price} SEK</h3>
+      <p>${p.description}</p>
+      <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">Köp via PayPal</a>
+    `;
+    productsList.appendChild(div);
+  });
+}
+
+fetchProducts();
+</script>
+
+</body>
+</html>

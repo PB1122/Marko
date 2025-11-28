@@ -3,33 +3,20 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Marko Köp&Sälj</title>
+<title>Lägg upp annons</title>
 <style>
   body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:0; }
-  header { background: #4CAF50; color: white; padding: 20px; text-align: center; position: relative; }
-  main { padding: 20px; max-width: 900px; margin: auto; }
-  form { background: white; padding: 20px; margin-bottom: 30px; border-radius: 8px; display: none; }
+  main { padding: 20px; max-width: 600px; margin: auto; }
+  form { background: white; padding: 20px; border-radius: 8px; }
   input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
   button { background: #4CAF50; color: white; border: none; cursor: pointer; }
   button:hover { background: #45a049; }
-  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
-  .products-list { margin-top: 20px; }
-  #toggleFormBtn { position: absolute; top: 20px; right: 20px; background: #ffffff; color: #4CAF50; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: auto; }
-  #toggleFormBtn:hover { background: #e8e8e8; }
-  .deleteBtn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
-  .deleteBtn:hover { background: #c0392b; }
 </style>
 </head>
 <body>
 
-<header>
-  <h1>Marko Köp&Sälj</h1>
-  <p>Lägg upp dina annonser själv, köp och sälj enkelt!</p>
-  <button id="toggleFormBtn">Lägg in ny annons</button>
-</header>
-
 <main>
-  <h2>Lägg upp en produkt</h2>
+  <h1>Lägg upp en ny annons</h1>
   <form id="productForm">
     <input type="text" id="title" placeholder="Produktnamn" required>
     <textarea id="description" placeholder="Beskrivning" required></textarea>
@@ -37,75 +24,13 @@
     <input type="text" id="paypal" placeholder="PayPal-mejl för betalning" required>
     <button type="submit">Lägg upp produkt</button>
   </form>
-
-  <h2>Produkter</h2>
-  <div class="products-list" id="productsList">
-    <p>Inga produkter upplagda än.</p>
-  </div>
+  <p><a href="annonser.html">Se alla annonser</a></p>
 </main>
 
 <script>
+const API_URL = "DIN_GOOGLE_APPS_SCRIPT_URL";
+
 const form = document.getElementById('productForm');
-const productsList = document.getElementById('productsList');
-const toggleFormBtn = document.getElementById('toggleFormBtn');
-
-// Din Google Apps Script URL
-const API_URL = "https://script.google.com/macros/s/AKfycbwi5Igax_IG7O96k5iGQw9oTzWFA43xTrzFCZIp3mmTeJLccitK61H3Z7kv7stWl8qSlQ/exec";
-
-let productsCache = [];
-
-// Visa / Dölj formulär
-toggleFormBtn.addEventListener('click', () => {
-  form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
-});
-
-// Hämta produkter från Google Sheet
-async function fetchProducts() {
-  try {
-    const res = await fetch(`${API_URL}?t=${Date.now()}`, { cache: "no-store" });
-    if (!res.ok) throw new Error(`GET misslyckades: ${res.status}`);
-    const products = await res.json();
-    productsCache = products;
-    renderProducts();
-  } catch (err) {
-    console.error("Kunde inte hämta produkter:", err);
-    productsList.innerHTML = '<p>Kunde inte hämta produkter. Försök igen.</p>';
-  }
-}
-
-// Rendera produkter på sidan
-function renderProducts() {
-  if(productsCache.length === 0) {
-    productsList.innerHTML = '<p>Inga produkter upplagda än.</p>';
-    return;
-  }
-  productsList.innerHTML = '';
-  productsCache.forEach((p) => {
-    const productDiv = document.createElement("div");
-    productDiv.className = "product";
-
-    const title = document.createElement("h3");
-    title.textContent = `${p.title} - ${p.price} SEK`;
-
-    const desc = document.createElement("p");
-    desc.textContent = p.description;
-
-    const link = document.createElement("a");
-    link.href = `https://www.paypal.me/${p.paypal}/${p.price}`;
-    link.textContent = "Köp via PayPal";
-    link.target = "_blank";
-
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "deleteBtn";
-    deleteBtn.textContent = "Ta bort annons";
-    deleteBtn.addEventListener("click", () => deleteProduct(p.id));
-
-    productDiv.append(title, desc, link, deleteBtn);
-    productsList.appendChild(productDiv);
-  });
-}
-
-// Lägg upp ny produkt
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
   const newProduct = {
@@ -122,40 +47,16 @@ form.addEventListener('submit', async function(e) {
       body: JSON.stringify(newProduct)
     });
 
-    const text = await response.text();
     if (response.ok) {
-      await fetchProducts(); // hämta uppdaterad lista
+      alert("Annonsen är upplagd!");
       form.reset();
-      form.style.display = "none";
     } else {
-      alert(`Kunde inte lägga till produkt (${response.status}). Svar: ${text}`);
+      alert("Kunde inte lägga till annons.");
     }
   } catch (err) {
-    console.error("Kunde inte lägga till produkt:", err);
+    console.error("Fel vid uppläggning:", err);
   }
 });
-
-// Ta bort produkt
-async function deleteProduct(id) {
-  try {
-    const response = await fetch(API_URL, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ id })
-    });
-
-    if (response.ok) {
-      await fetchProducts(); // hämta uppdaterad lista
-    } else {
-      alert(`Kunde inte ta bort produkt (${response.status}).`);
-    }
-  } catch (err) {
-    console.error("Fel vid borttagning:", err);
-  }
-}
-
-// Hämta produkter vid start
-fetchProducts();
 </script>
 
 </body>
