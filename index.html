@@ -57,7 +57,8 @@
   <form id="productForm">
     <input type="text" id="title" placeholder="Produktnamn" required>
     <textarea id="description" placeholder="Beskrivning" required></textarea>
-    <input type="url" id="image" placeholder="Bild-URL" required>
+    <input type="file" id="imageFile" accept="image/*" required>
+    <img id="imagePreview" src="" alt="Förhandsvisning" style="max-width:150px; display:none; margin-bottom:10px;">
     <input type="number" id="price" placeholder="Pris (SEK)" required>
     <input type="text" id="paypal" placeholder="PayPal-mejl för betalning" required>
     <button type="submit">Lägg upp produkt</button>
@@ -73,14 +74,36 @@
 const form = document.getElementById('productForm');
 const productsList = document.getElementById('productsList');
 const toggleFormBtn = document.getElementById('toggleFormBtn');
-const API_URL = "https://script.google.com/macros/s/AKfycbx2oaMAmIucgOLPgx90pUTZTdEPBMgjEyPTRL40GooStdQBEt7vrJ-LvUmkbV0IVU6_MA/exec";
+const imageFileInput = document.getElementById('imageFile');
+const imagePreview = document.getElementById('imagePreview');
+
+// Din Google Apps Script URL
+const API_URL = "https://script.google.com/macros/s/AKfycbyxvD8TISoN2IuG0eh_3CfUGoPA8KVuc603KzPSkB5Qp3Ap1FykiJ6n0f_lTttg4V8HUA/exec";
 
 let productsCache = [];
 
+// Visa / Dölj formulär
 toggleFormBtn.addEventListener('click', () => {
   form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
 });
 
+// Förhandsvisning av vald bild
+imageFileInput.addEventListener('change', () => {
+  const file = imageFileInput.files[0];
+  if(file){
+    const reader = new FileReader();
+    reader.onload = function(e){
+      imagePreview.src = e.target.result;
+      imagePreview.style.display = 'block';
+    }
+    reader.readAsDataURL(file);
+  } else {
+    imagePreview.src = '';
+    imagePreview.style.display = 'none';
+  }
+});
+
+// Hämta produkter
 async function fetchProducts() {
   try {
     const res = await fetch(API_URL);
@@ -92,6 +115,7 @@ async function fetchProducts() {
   }
 }
 
+// Rendera produkter på sidan
 function renderProducts() {
   if(productsCache.length === 0) {
     productsList.innerHTML = '<p>Inga produkter upplagda än.</p>';
@@ -112,6 +136,7 @@ function renderProducts() {
   });
 }
 
+// Ta bort produkt
 async function deleteProduct(index) {
   if(!confirm("Vill du verkligen ta bort produkten?")) return;
   try {
@@ -126,12 +151,17 @@ async function deleteProduct(index) {
   }
 }
 
+// Lägg upp ny produkt
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
+
+  // Om förhandsvisning används, spara som Base64-dataURL
+  let imageData = imagePreview.src || "";
+
   const newProduct = {
     title: document.getElementById('title').value,
     description: document.getElementById('description').value,
-    image: document.getElementById('image').value,
+    image: imageData,  // använder förhandsvisning som bild
     price: document.getElementById('price').value,
     paypal: document.getElementById('paypal').value
   };
@@ -145,12 +175,15 @@ form.addEventListener('submit', async function(e) {
     productsCache.push(newProduct);
     renderProducts();
     form.reset();
+    imagePreview.src = '';
+    imagePreview.style.display = 'none';
     form.style.display = "none";
   } catch (err) {
     console.error("Kunde inte lägga till produkt:", err);
   }
 });
 
+// Hämta produkter vid start
 fetchProducts();
 </script>
 
