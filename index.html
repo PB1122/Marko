@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="sv">
 <head>
@@ -63,12 +62,14 @@ toggleFormBtn.addEventListener('click', () => {
 // Hämta produkter från Google Sheet
 async function fetchProducts() {
   try {
-    const res = await fetch(API_URL);
+    const res = await fetch(`${API_URL}?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`GET misslyckades: ${res.status}`);
     const products = await res.json();
     productsCache = products;
     renderProducts();
   } catch (err) {
     console.error("Kunde inte hämta produkter:", err);
+    productsList.innerHTML = '<p>Kunde inte hämta produkter. Försök igen.</p>';
   }
 }
 
@@ -79,7 +80,7 @@ function renderProducts() {
     return;
   }
   productsList.innerHTML = '';
-  productsCache.forEach((p, index) => {
+  productsCache.forEach((p) => {
     const productDiv = document.createElement("div");
     productDiv.className = "product";
 
@@ -97,7 +98,7 @@ function renderProducts() {
     const deleteBtn = document.createElement("button");
     deleteBtn.className = "deleteBtn";
     deleteBtn.textContent = "Ta bort annons";
-    deleteBtn.addEventListener("click", () => deleteProduct(index));
+    deleteBtn.addEventListener("click", () => deleteProduct(p.id));
 
     productDiv.append(title, desc, link, deleteBtn);
     productsList.appendChild(productDiv);
@@ -121,12 +122,13 @@ form.addEventListener('submit', async function(e) {
       body: JSON.stringify(newProduct)
     });
 
+    const text = await response.text();
     if (response.ok) {
       await fetchProducts(); // hämta uppdaterad lista
       form.reset();
       form.style.display = "none";
     } else {
-      alert("Kunde inte lägga till produkt. Försök igen.");
+      alert(`Kunde inte lägga till produkt (${response.status}). Svar: ${text}`);
     }
   } catch (err) {
     console.error("Kunde inte lägga till produkt:", err);
@@ -134,19 +136,18 @@ form.addEventListener('submit', async function(e) {
 });
 
 // Ta bort produkt
-async function deleteProduct(index) {
-  const product = productsCache[index];
+async function deleteProduct(id) {
   try {
     const response = await fetch(API_URL, {
       method: "DELETE",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ title: product.title })
+      body: JSON.stringify({ id })
     });
 
     if (response.ok) {
       await fetchProducts(); // hämta uppdaterad lista
     } else {
-      alert("Kunde inte ta bort produkt.");
+      alert(`Kunde inte ta bort produkt (${response.status}).`);
     }
   } catch (err) {
     console.error("Fel vid borttagning:", err);
