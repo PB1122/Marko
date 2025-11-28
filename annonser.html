@@ -8,6 +8,7 @@
   body { font-family: Arial, sans-serif; background: #f2f2f2; margin:0; padding:0; }
   main { padding: 20px; max-width: 900px; margin: auto; }
   .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
+  .product img { max-width: 200px; display: block; margin-top: 10px; }
   .deleteBtn { background: #e74c3c; color: white; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; margin-top: 10px; }
   .deleteBtn:hover { background: #c0392b; }
 </style>
@@ -21,18 +22,21 @@
 </main>
 
 <script>
-const API_URL = "DIN_GOOGLE_APPS_SCRIPT_URL";
+// Använd din Cloudflare Worker URL här
+const API_URL = "https://minproxy.workers.dev"; 
+
 const productsList = document.getElementById('productsList');
 let productsCache = [];
 
 async function fetchProducts() {
   try {
     const res = await fetch(`${API_URL}?t=${Date.now()}`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`GET misslyckades: ${res.status}`);
     const products = await res.json();
     productsCache = products;
     renderProducts();
   } catch (err) {
-    console.error("Kunde inte hämta produkter:", err);
+    console.error("Kunde inte hämta annonser:", err);
     productsList.innerHTML = '<p>Kunde inte hämta annonser.</p>';
   }
 }
@@ -49,6 +53,7 @@ function renderProducts() {
     div.innerHTML = `
       <h3>${p.title} - ${p.price} SEK</h3>
       <p>${p.description}</p>
+      ${p.image ? `<img src="${p.image}" alt="${p.title}">` : ""}
       <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">Köp via PayPal</a>
     `;
     productsList.appendChild(div);
