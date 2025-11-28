@@ -20,41 +20,42 @@
   <form id="productForm">
     <input type="text" id="title" placeholder="Produktnamn" required>
     <textarea id="description" placeholder="Beskrivning" required></textarea>
+    <input type="text" id="image" placeholder="Bild-URL (valfritt)">
     <input type="number" id="price" placeholder="Pris (SEK)" required>
-    <input type="text" id="paypal" placeholder="PayPal-mejl för betalning" required>
+    <input type="text" id="paypal" placeholder="PayPal-mejl eller PayPal.Me" required>
     <button type="submit">Lägg upp produkt</button>
   </form>
   <p><a href="annonser.html">Se alla annonser</a></p>
 </main>
 
 <script>
-const API_URL = "DIN_GOOGLE_APPS_SCRIPT_URL";
+const API_URL = "https://script.google.com/macros/s/AKfycbwFY7LSM7CRaGy_ZuiSAJXg9CxRrArT43xotMa7rT3vE9tuHXuHpGOW_xRv1sJrcP2ozw/exec";
 
-const form = document.getElementById('productForm');
-form.addEventListener('submit', async function(e) {
+document.getElementById('productForm').addEventListener('submit', async e => {
   e.preventDefault();
   const newProduct = {
     title: document.getElementById('title').value,
     description: document.getElementById('description').value,
+    image: document.getElementById('image').value,
     price: document.getElementById('price').value,
     paypal: document.getElementById('paypal').value
   };
-
   try {
-    const response = await fetch(API_URL, {
+    const res = await fetch(API_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(newProduct)
     });
-
-    if (response.ok) {
+    if(res.ok){
       alert("Annonsen är upplagd!");
-      form.reset();
+      e.target.reset();
     } else {
-      alert("Kunde inte lägga till annons.");
+      const text = await res.text();
+      alert("Kunde inte lägga till annons: " + text);
     }
-  } catch (err) {
+  } catch(err){
     console.error("Fel vid uppläggning:", err);
+    alert("Ett fel uppstod.");
   }
 });
 </script>
