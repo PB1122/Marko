@@ -12,41 +12,15 @@
   input, textarea, button { width: 100%; padding: 10px; margin: 5px 0; border-radius: 5px; border: 1px solid #ccc; }
   button { background: #4CAF50; color: white; border: none; cursor: pointer; }
   button:hover { background: #45a049; }
-  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; position: relative; }
-  .product img { max-width: 150px; display:block; margin-bottom:10px; }
+  .product { background: white; padding: 15px; margin-bottom: 15px; border-radius: 8px; }
   .products-list { margin-top: 20px; }
-  .delete-btn { background: #f44336; margin-top: 5px; }
-  .delete-btn:hover { background: #d32f2f; }
-  #toggleFormBtn {
-    position: absolute;
-    top: 20px;
-    right: 20px;
-    background: #ffffff;
-    color: #4CAF50;
-    border: none;
-    padding: 6px 12px;
-    border-radius: 5px;
-    cursor: pointer;
-    font-weight: bold;
-    width: auto;
-  }
+  #toggleFormBtn { position: absolute; top: 20px; right: 20px; background: #ffffff; color: #4CAF50; border: none; padding: 6px 12px; border-radius: 5px; cursor: pointer; font-weight: bold; width: auto; }
   #toggleFormBtn:hover { background: #e8e8e8; }
-  #devNotice {
-    position: absolute;
-    top: 20px;
-    left: 20px;
-    font-size: 14px;
-    color: #fff;
-    background: rgba(0,0,0,0.2);
-    padding: 4px 8px;
-    border-radius: 4px;
-  }
 </style>
 </head>
 <body>
 
 <header>
-  <div id="devNotice">Denna sida är under utveckling och ej färdig.</div>
   <h1>Marko Köp&Sälj</h1>
   <p>Lägg upp dina annonser själv, köp och sälj enkelt!</p>
   <button id="toggleFormBtn">Lägg in ny annons</button>
@@ -57,8 +31,6 @@
   <form id="productForm">
     <input type="text" id="title" placeholder="Produktnamn" required>
     <textarea id="description" placeholder="Beskrivning" required></textarea>
-    <input type="file" id="imageFile" accept="image/*" required>
-    <img id="imagePreview" src="" alt="Förhandsvisning" style="max-width:150px; display:none; margin-bottom:10px;">
     <input type="number" id="price" placeholder="Pris (SEK)" required>
     <input type="text" id="paypal" placeholder="PayPal-mejl för betalning" required>
     <button type="submit">Lägg upp produkt</button>
@@ -74,11 +46,9 @@
 const form = document.getElementById('productForm');
 const productsList = document.getElementById('productsList');
 const toggleFormBtn = document.getElementById('toggleFormBtn');
-const imageFileInput = document.getElementById('imageFile');
-const imagePreview = document.getElementById('imagePreview');
 
 // Din Google Apps Script URL
-const API_URL = "https://script.google.com/macros/s/AKfycbyxvD8TISoN2IuG0eh_3CfUGoPA8KVuc603KzPSkB5Qp3Ap1FykiJ6n0f_lTttg4V8HUA/exec";
+const API_URL = "https://script.google.com/macros/s/AKfycbwlHFGmmG6kD9MjXDvY0gfudR_kmYJ4PhNs30EE6d0525QF-H1SF_6N0m6segGKhYla-w/exec";
 
 let productsCache = [];
 
@@ -87,23 +57,7 @@ toggleFormBtn.addEventListener('click', () => {
   form.style.display = form.style.display === "none" || form.style.display === "" ? "block" : "none";
 });
 
-// Förhandsvisning av vald bild
-imageFileInput.addEventListener('change', () => {
-  const file = imageFileInput.files[0];
-  if(file){
-    const reader = new FileReader();
-    reader.onload = function(e){
-      imagePreview.src = e.target.result;
-      imagePreview.style.display = 'block';
-    }
-    reader.readAsDataURL(file);
-  } else {
-    imagePreview.src = '';
-    imagePreview.style.display = 'none';
-  }
-});
-
-// Hämta produkter
+// Hämta produkter från Google Sheet
 async function fetchProducts() {
   try {
     const res = await fetch(API_URL);
@@ -126,42 +80,20 @@ function renderProducts() {
     const productHTML = `
       <div class="product">
         <h3>${p.title} - ${p.price} SEK</h3>
-        <img src="${p.image}" alt="${p.title}">
         <p>${p.description}</p>
         <a href="https://www.paypal.me/${p.paypal}/${p.price}" target="_blank">Köp via PayPal</a>
-        <button class="delete-btn" onclick="deleteProduct(${index})">Ta bort produkt</button>
       </div>
     `;
     productsList.insertAdjacentHTML('beforeend', productHTML);
   });
 }
 
-// Ta bort produkt
-async function deleteProduct(index) {
-  if(!confirm("Vill du verkligen ta bort produkten?")) return;
-  try {
-    await fetch(API_URL, {
-      method: "DELETE",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ index })
-    });
-    fetchProducts();
-  } catch (err) {
-    console.error("Kunde inte ta bort produkt:", err);
-  }
-}
-
 // Lägg upp ny produkt
 form.addEventListener('submit', async function(e) {
   e.preventDefault();
-
-  // Om förhandsvisning används, spara som Base64-dataURL
-  let imageData = imagePreview.src || "";
-
   const newProduct = {
     title: document.getElementById('title').value,
     description: document.getElementById('description').value,
-    image: imageData,  // använder förhandsvisning som bild
     price: document.getElementById('price').value,
     paypal: document.getElementById('paypal').value
   };
@@ -175,8 +107,6 @@ form.addEventListener('submit', async function(e) {
     productsCache.push(newProduct);
     renderProducts();
     form.reset();
-    imagePreview.src = '';
-    imagePreview.style.display = 'none';
     form.style.display = "none";
   } catch (err) {
     console.error("Kunde inte lägga till produkt:", err);
